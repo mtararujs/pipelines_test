@@ -1,0 +1,32 @@
+---
+  format_version: 2
+  pipelines:
+    test-ui:
+      group: tests
+      label_template: "${tests}"
+      lock_behavior: unlockWhenFinished
+      materials:
+        tests:
+          git: https://code.tdlbox.com/martins.tararujs/courses_api_tests.git
+          branch: master
+          shallow_clone: true
+          auto_update: true
+      environment_variables:
+        TEST_ENVIRONMENT: dev
+      stages:
+        - test:
+            jobs:
+              test-browser-firefox:
+                tasks:
+                  - exec:
+                      command: bash
+                      arguments:
+                        - -c
+                        - echo "Running UI tests on firefox ${TEST_ENVIRONMENT}"
+              test-browser-chrome:
+                tasks:
+                  - exec:
+                      command: bash
+                      arguments:
+                        - -c
+                        - echo "Running UI tests on chrome ${TEST_ENVIRONMENT}"

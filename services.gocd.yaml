@@ -1,0 +1,177 @@
+---
+    format_version: 2
+    common:
+      test-tasks: &test-tasks
+        - exec:
+            command: bash
+            arguments:
+              - -c
+              - docker run --network=host -t -d --name api_test_executor_${ENV_NAME} api_test_executor
+        - exec:
+            command: bash
+            arguments:
+              - -c
+              - docker exec api_test_executor_${ENV_NAME} cucumber --tags=@${ENV_NAME} --format progress -c --format html --out test-output/report.html
+        - exec:
+            command: bash
+            arguments:
+              - -c
+              - docker cp api_test_executor_${ENV_NAME}:/usr/src/api-tests/test-output/report.html report_${ENV_NAME}.html
+        - exec:
+            run_if: any
+            command: bash
+            arguments:
+              - -c
+              - docker stop api_test_executor_${ENV_NAME}
+        - exec:
+            run_if: any
+            command: bash
+            arguments:
+              - -c
+              - docker rm api_test_executor_${ENV_NAME}
+  
+      deploy-tasks: &deploy-tasks
+        - exec:
+            command: bash
+            arguments:
+              - -c
+              - echo "deployment on ${ENV_NAME}"
+  
+  
+    pipelines:
+      java-adapter:
+        group: services
+        label_template: "${java-app}"
+        lock_behavior: unlockWhenFinished
+        materials:
+          java-app:
+            git: https://code.tdlbox.com/martins.tararujs/courses_api_tests.git
+            branch: master
+            shallow_clone: true
+            auto_update: true
+        stages:
+          - build:
+              jobs:
+                build:
+                  tasks:
+                    - exec:
+                        command: bash
+                        arguments:
+                          - -c
+                          - echo "build java app"
+                    - exec:
+                        command: bash
+                        arguments:
+                          - -c
+                          - sleep 2
+          - deploy-dev:
+              environment_variables:
+                ENV_NAME: dev
+              jobs:
+                deploy:
+                  tasks: *deploy-tasks
+          - test-dev:
+              environment_variables:
+                ENV_NAME: dev
+              jobs:
+                test:
+                  artifacts:
+                    - build:
+                        source: report_dev.html
+                        destination: test-output/
+                  tabs:
+                    Report: test-output/report_dev.html
+                  tasks: *test-tasks
+          - deploy-int:
+              jobs:
+                deployment:
+                  tasks:
+                    - exec:
+                        command: bash
+                        arguments:
+                          - -c
+                          - echo "deployment on int"
+          - test-int:
+              jobs:
+                test:
+                  artifacts:
+                    - build:
+                        source: report_int.html
+                        destination: test-output/
+                  tabs:
+                    Report: test-output/report_int.html
+                  tasks:
+                    - exec:
+                        command: bash
+                        arguments:
+                          - -c
+                          - docker run --network=host -t -d --name api_test_executor_int api_test_executor:latest
+                    - exec:
+                        command: bash
+                        arguments:
+                          - -c
+                          - docker exec api_test_executor_int cucumber --tags=@dev --format progress -c --format html --out test-output/report.html
+                    - exec:
+                        command: bash
+                        arguments:
+                          - -c
+                          - docker cp api_test_executor_int:/usr/src/api-tests/test-output/report.html report_int.html
+                    - exec:
+                        run_if: any
+                        command: bash
+                        arguments:
+                          - -c
+                          - docker stop api_test_executor_int
+                    - exec:
+                        run_if: any
+                        command: bash
+                        arguments:
+                          - -c
+                          - docker rm api_test_executor_int
+          - deploy-prd:
+              jobs:
+                deployment:
+                  tasks:
+                    - exec:
+                        command: bash
+                        arguments:
+                          - -c
+                          - echo "deployment on prd"
+          - test-prd:
+              jobs:
+                test:
+                  artifacts:
+                    - build:
+                        source: report_prd.html
+                        destination: test-output/
+                  tabs:
+                    Report: test-output/report_prd.html
+                  tasks:
+                    - exec:
+                        command: bash
+                        arguments:
+                          - -c
+                          - docker run --network=host -t -d --name api_test_executor_prd api_test_executor:latest
+                    - exec:
+                        command: bash
+                        arguments:
+                          - -c
+                          - docker exec api_test_executor_prd cucumber --tags=@dev --format progress -c --format html --out test-output/report.html
+                    - exec:
+                        command: bash
+                        arguments:
+                          - -c
+                          - docker cp api_test_executor_prd:/usr/src/api-tests/test-output/report.html report_prd.html
+                    - exec:
+                        run_if: any
+                        command: bash
+                        arguments:
+                          - -c
+                          - docker stop api_test_executor_prd
+                    - exec:
+                        run_if: any
+                        command: bash
+                        arguments:
+                          - -c
+                          - docker rm api_test_executor_prd
+    
