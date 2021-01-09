@@ -29,24 +29,24 @@
             arguments:
               - -c
               - docker rm api_test_executor_${ENV_NAME}
-  
+
       deploy-tasks: &deploy-tasks
         - exec:
             command: bash
             arguments:
               - -c
               - echo "deployment on ${ENV_NAME}"
-  
-  
+
+
     pipelines:
       java-adapter:
-        group: services
+        group: defaultGroup
         label_template: "${java-app}"
         lock_behavior: unlockWhenFinished
         materials:
           java-app:
-            git: https://code.tdlbox.com/martins.tararujs/courses_api_tests.git
-            branch: master
+            git: https://github.com/mtararujs/api_tests_ci_test
+            branch: main
             shallow_clone: true
             auto_update: true
         stages:
@@ -174,4 +174,3 @@
                         arguments:
                           - -c
                           - docker rm api_test_executor_prd
-    

@@ -7,8 +7,8 @@
       lock_behavior: unlockWhenFinished
       materials:
         tests:
-          git: https://code.tdlbox.com/martins.tararujs/courses_api_tests.git
-          branch: master
+          git: https://github.com/mtararujs/api_tests_ci_test
+          branch: main
           shallow_clone: true
           auto_update: true
       environment_variables:
